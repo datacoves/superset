@@ -16,7 +16,7 @@
 # under the License.
 # pylint: disable=redefined-outer-name
 
-from typing import Iterator
+from typing import Any, Iterator
 
 import pytest
 from pytest_mock import MockFixture
@@ -28,8 +28,8 @@ from superset.app import SupersetApp
 from superset.initialization import SupersetAppInitializer
 
 
-@pytest.fixture()
-def session() -> Iterator[Session]:
+@pytest.fixture
+def session(mocker: MockFixture) -> Iterator[Session]:
     """
     Create an in-memory SQLite session to test models.
     """
@@ -40,11 +40,18 @@ def session() -> Iterator[Session]:
     # flask calls session.remove()
     in_memory_session.remove = lambda: None
 
+    # patch session
+    mocker.patch(
+        "superset.security.SupersetSecurityManager.get_session",
+        return_value=in_memory_session,
+    )
+    mocker.patch("superset.db.session", in_memory_session)
+
     yield in_memory_session
 
 
-@pytest.fixture
-def app(mocker: MockFixture, session: Session) -> Iterator[SupersetApp]:
+@pytest.fixture(scope="session")
+def app() -> Iterator[SupersetApp]:
     """
     A fixture that generates a Superset app.
     """
@@ -52,18 +59,16 @@ def app(mocker: MockFixture, session: Session) -> Iterator[SupersetApp]:
 
     app.config.from_object("superset.config")
     app.config["SQLALCHEMY_DATABASE_URI"] = "sqlite://"
-    app.config["FAB_ADD_SECURITY_VIEWS"] = False
 
     app_initializer = app.config.get("APP_INITIALIZER", SupersetAppInitializer)(app)
     app_initializer.init_app()
 
-    # patch session
-    mocker.patch(
-        "superset.security.SupersetSecurityManager.get_session", return_value=session,
-    )
-    mocker.patch("superset.db.session", session)
-
     yield app
+
+
+@pytest.fixture
+def client(app: SupersetApp) -> Any:
+    return app.test_client()
 
 
 @pytest.fixture
