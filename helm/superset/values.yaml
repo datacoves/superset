@@ -210,6 +210,23 @@ resources: {}
   #   cpu: 100m
   #   memory: 128Mi
 
+livenessProbe:
+  httpGet:
+    path: /health
+    port: http
+  initialDelaySeconds: 80
+  timeoutSeconds: 5
+  periodSeconds: 10
+  failureThreshold: 2
+readinessProbe:
+  httpGet:
+    path: /health
+    port: http
+  initialDelaySeconds: 30
+  timeoutSeconds: 5
+  periodSeconds: 10
+  failureThreshold: 2
+
 ##
 ## Custom hostAliases for all superset pods
 ## https://kubernetes.io/docs/tasks/network/customize-hosts-file-for-pods/
