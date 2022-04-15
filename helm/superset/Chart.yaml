@@ -21,8 +21,8 @@ name: superset
 maintainers:
   - name: craig-rueda
     email: craig@craigrueda.com
-    url: https://github.com/craig-rueda
-version: 0.5.12
+    url: https
+version: 0.5.13
 dependencies:
   - name: postgresql
     version: 10.2.0
